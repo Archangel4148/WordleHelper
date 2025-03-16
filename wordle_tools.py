@@ -1,12 +1,10 @@
 import random
 from dataclasses import dataclass, field
 
-from bots import WordleBot
-
 
 @dataclass
 class WordleState:
-    green_letters: str = "_____"
+    green_letters: list[str] = field(default_factory=lambda: ["_" for _ in range(5)])
     yellow_positions: list[set[str]] = field(default_factory=lambda: [set() for _ in range(5)])
     gray_letters: set[str] = field(default_factory=set)
 
@@ -15,7 +13,7 @@ class WordleState:
                           self.yellow_positions]
         return (
             "========================\n"
-            f"Green:  {self.green_letters}\n"
+            f"Green:  {''.join(letter.upper() if letter else '_' for letter in self.green_letters)}\n"
             f"Yellow: {'  '.join(yellow_display)}\n"
             f"Gray:   {''.join(self.gray_letters) if self.gray_letters else 'None'}\n"
             "========================\n"
@@ -34,7 +32,7 @@ class WordleGame:
             return False
         for i, letter in enumerate(word.upper()):
             if letter == self.target_word[i]:
-                self.state.green_letters = self.state.green_letters[:i] + letter + self.state.green_letters[i + 1:]
+                self.state.green_letters[i] = letter
             elif letter in self.target_word:
                 self.state.yellow_positions[i].add(letter)
             else:
@@ -64,8 +62,23 @@ class WordleGame:
         print("\n\nYou lost! The correct word was '" + self.target_word.upper() + "'")
         print("Final State:\n" + str(self.state))
 
-    def bot_play(self, solver, bot: WordleBot, max_attempts=6):
-        pass
+    def bot_play(self, bot, max_attempts=6) -> int:
+        attempts = 0
+        while attempts < max_attempts:
+            # Allow the bot to make a guess
+            guess = bot.guess(self.state, self.guessable_words).casefold()
+
+            if not self.guess(guess):
+                print("BOT GUESS INVALID. TRY AGAIN.\n")
+                return -1
+
+            attempts += 1
+
+            if guess.casefold() == self.target_word.casefold():
+                print(f"\n\n'{self.target_word.upper()}' is correct! You win!")
+                return attempts
+
+        print("\n\nYou lost! The correct word was '" + self.target_word.upper() + "'")
 
 
 def load_word_lists(word_list_path, guessable_word_path):
@@ -85,4 +98,5 @@ if __name__ == "__main__":
     wordle_state = WordleState()
     game = WordleGame(wordle_state, list(valid_words))
     rounds_taken = game.human_play()
-    print(f"Rounds taken: {rounds_taken}")
+    if rounds_taken != -1:
+        print(f"Rounds taken: {rounds_taken}")
