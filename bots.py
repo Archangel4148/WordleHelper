@@ -9,6 +9,11 @@ class WordleBot:
         pass
 
     def guess(self, wordle_state: WordleState, guessable_words: list[str]) -> str:
+        """
+        :param wordle_state: The current state of the game (contains green_letters, yellow_positions, and gray_letters)
+        :param guessable_words: The complete list of valid words that can be guess
+        :return: A single string representing your bot's guess
+        """
         raise NotImplementedError("Subclasses must implement the guess method.")
 
 
