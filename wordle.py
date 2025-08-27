@@ -160,6 +160,7 @@ class WordleSolver:
         return sorted_results[:num_results]
 
 
+    # TODO: Instead of using letter frequency, use information theory!
     def get_word_heuristic_score(self, word: str) -> float:
         score = 1
         duplicate_letters = len(word) - len(set(word))
@@ -234,7 +235,6 @@ if __name__ == '__main__':
 
         # Update the solver's recommendations
         solver.update_remaining_answers()
-
 
     if win:
         print("You Won!")
