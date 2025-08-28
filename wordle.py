@@ -132,7 +132,6 @@ class WordleSolver:
     def load_files(self):
         with open(ALL_WORDS_PATH, "r") as f:
             self.valid_submissions = set(line.strip() for line in f.readlines())
-            print(len(self.valid_submissions))
         with open(ALL_ANSWERS_PATH, "r") as f:
             self.valid_answers = set(line.strip() for line in f.readlines())
         with open(BACKUP_WORDS_PATH, "r") as f:
@@ -160,7 +159,7 @@ class WordleSolver:
         return sorted_results[:num_results]
 
 
-    # TODO: Instead of using letter frequency, use information theory!
+    # TODO: Instead of using letter frequency, use information theory? (Probably combine both methods)
     def get_word_heuristic_score(self, word: str) -> float:
         score = 1
         duplicate_letters = len(word) - len(set(word))
