@@ -159,11 +159,12 @@ class WordleSolver:
 
     def get_best_answers(self, num_results: int, candidate_depth: int):
         # Find the "best" candidates using a simple heuristic
-        candidates = sorted(self.valid_submissions, key=self.get_word_heuristic_score, reverse=True)[:candidate_depth]
+        heuristic_candidates = sorted(self.valid_submissions, key=self.get_word_heuristic_score, reverse=True)[
+            :candidate_depth]
+        candidates = set(heuristic_candidates) | set(self.remaining_answers)
 
         # Focus on the candidates and find the best information gain
-        info_answers = []
-        info_guesses = []
+        info_guesses, info_answers = [], []
         for g in candidates:
             info = get_info_gain(g, self.remaining_answers)
             if g in self.remaining_answers:
