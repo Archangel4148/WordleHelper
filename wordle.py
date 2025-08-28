@@ -2,10 +2,13 @@ import dataclasses
 import enum
 from typing import Self
 
+from info_theory_stuff import get_info_gain
+
 ALL_WORDS_PATH = "resources/wordle_valid_submissions.txt"
 ALL_ANSWERS_PATH = "resources/wordle_correct_answers.txt"
 BACKUP_WORDS_PATH = "resources/other_dataset_words.txt"  # Currently unused
 POSITION_FREQUENCIES_PATH = "resources/position_frequencies.txt"
+
 
 class WordleColor(enum.StrEnum):
     GREEN = "green"
@@ -154,12 +157,26 @@ class WordleSolver:
             self.remaining_answers = [word for word in self.backup_guesses if self.state.check_possible_answer(word)]
             self.backup_flag = True
 
-    def get_best_answers(self, num_results: int):
-        sorted_results = sorted(self.remaining_answers, key=self.get_word_heuristic_score, reverse=True)
-        return sorted_results[:num_results]
+    def get_best_answers(self, num_results: int, candidate_depth: int):
+        # Find the "best" candidates using a simple heuristic
+        candidates = sorted(self.valid_submissions, key=self.get_word_heuristic_score, reverse=True)[:candidate_depth]
 
+        # Focus on the candidates and find the best information gain
+        info_answers = []
+        info_guesses = []
+        for g in candidates:
+            info = get_info_gain(g, self.remaining_answers)
+            if g in self.remaining_answers:
+                info_answers.append((g, info))
+            else:
+                info_guesses.append((g, info))
 
-    # TODO: Instead of using letter frequency, use information theory? (Probably combine both methods)
+        # Sort lists by descending information gain
+        best_answers = sorted(info_answers, key=lambda g: g[1], reverse=True)
+        best_guesses = sorted(info_guesses, key=lambda g: g[1], reverse=True)
+
+        return best_answers[:num_results], best_guesses[:num_results]
+
     def get_word_heuristic_score(self, word: str) -> float:
         score = 1
         duplicate_letters = len(word) - len(set(word))
@@ -206,13 +223,17 @@ def handle_user_input(guess_options: list[str], word_length: int) -> tuple[str, 
     return word, color_input
 
 
-if __name__ == '__main__':
-    word_length: int = 5
-    num_rounds: int = 6
+def main():
+    # User inputs
+    word_length: int = 5  # Number of letters in each word
+    num_rounds: int = 6  # Number of guesses allowed
+    num_recommendations: int = 5  # Number of recommended guesses/answers to display
+    candidate_depth: int = 200  # Number of candidates to deep-search (this affects runtime!)
+
+    # Game variables
     state = WordleState()
     solver = WordleSolver(state)
     win = False
-    guess_options = []
 
     for turn in range(num_rounds):
         # Display the game state and answer recommendations
@@ -220,10 +241,16 @@ if __name__ == '__main__':
         if solver.backup_flag:
             print("-- USING BACKUP ANSWERS! --")
         print(f"Remaining answers: {len(solver.remaining_answers)}")
-        guess_options = solver.get_best_answers(5)
-        print("\n".join([f"{i + 1}. {guess}" for i, guess in enumerate(guess_options)]))
+        best_answers, best_guesses = solver.get_best_answers(num_recommendations, candidate_depth)
+        print("Best Information guesses:")
+        print("\n".join([f"{i + 1}. {guess[0]} ({guess[1]})" for i, guess in enumerate(best_guesses)]))
+        print("Best Answers:")
+        print("\n".join(
+            [f"{i + 1 + num_recommendations}. {guess[0]} ({guess[1]})" for i, guess in enumerate(best_answers)])
+        )
 
         # Get user's guess and update the state
+        guess_options = [g[0] for g in best_guesses + best_answers]
         guess = WordleGuessResult.from_strings(*handle_user_input(guess_options, word_length))
         state.update(guess)
 
@@ -239,3 +266,7 @@ if __name__ == '__main__':
         print("You Won!")
     else:
         print("You Lost...")
+
+
+if __name__ == '__main__':
+    main()

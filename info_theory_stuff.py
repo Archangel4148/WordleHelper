@@ -1,3 +1,4 @@
+import math
 import time
 from collections import Counter
 
@@ -24,25 +25,49 @@ def get_result(answer: str, guess: str) -> str:
 
     return "".join(colors)
 
+def get_info_gain(guess: str, possible_answers: list[str]) -> float:
+    """Calculate the information gained (in bits) from a given guess"""
+    num_answers = len(possible_answers)
+    if num_answers == 0:
+        return 0.0
 
-possible_words = ["cat", "rat", "arc", "zen"]
-answer = "rat"
-
-result_groups = {guess: {} for guess in possible_words}
-
-# For each guess, group possible answers by their resulting pattern
-for guess in possible_words:
-    for theoretical_answer in possible_words:
+    # Group possible answers by their resulting pattern
+    result_groups = {}
+    for theoretical_answer in possible_answers:
         result = get_result(theoretical_answer, guess)
-        result_groups[guess].setdefault(result, [])
-        result_groups[guess][result].append(theoretical_answer)
+        result_groups.setdefault(result, []).append(theoretical_answer)
 
-# Find the probability of each pattern
-result_probabilities = {r: {k: 0 for k in d} for r, d in result_groups.items()}
+    current_entropy = math.log2(num_answers)
+    expected_entropy = 0.0
+    for result, matches in result_groups.items():
+        num_matches = len(matches)
 
-for word, d in result_groups.items():
-    print(word, "-", d)
+        # Calculate probability/entropy for each result
+        prob = num_matches / num_answers
+        entropy = math.log2(num_matches)
+
+        # Update total guess entropy
+        expected_entropy += prob * entropy
+
+    # Calculate total guess entropy and information gain
+    information_gain = current_entropy - expected_entropy
+
+    return information_gain
 
 
 
-
+if __name__ == '__main__':
+    possible_words = [
+        "plumb",
+        "crane",
+        "flame",
+        "grape",
+        "bland",
+        "slate",
+        "spike",
+        "trout",
+        "zebra",
+        "fjord"
+    ]
+    best_guess = max(possible_words, key=lambda g: get_info_gain(g, possible_words))
+    print("Best guess:", best_guess)
