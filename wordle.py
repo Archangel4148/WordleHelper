@@ -6,7 +6,7 @@ from info_theory_stuff import get_info_gain
 
 ALL_WORDS_PATH = "resources/wordle_valid_submissions.txt"
 ALL_ANSWERS_PATH = "resources/wordle_correct_answers.txt"
-BACKUP_WORDS_PATH = "resources/other_dataset_words.txt"  # Currently unused
+BACKUP_WORDS_PATH = "resources/other_dataset_words.txt"
 POSITION_FREQUENCIES_PATH = "resources/position_frequencies.txt"
 
 

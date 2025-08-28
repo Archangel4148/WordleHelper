@@ -1,11 +1,9 @@
 import math
-import time
-from collections import Counter
 
 
 def get_result(answer: str, guess: str) -> str:
     """Get the resulting color string for a given guess/answer pair"""
-    assert(len(answer) == len(guess))
+    assert (len(answer) == len(guess))
     answer_chars = list(answer)
     # All gray by default
     colors = ["r"] * len(answer)
@@ -24,6 +22,7 @@ def get_result(answer: str, guess: str) -> str:
             answer_chars[guess_idx] = "_"
 
     return "".join(colors)
+
 
 def get_info_gain(guess: str, possible_answers: list[str]) -> float:
     """Calculate the information gained (in bits) from a given guess"""
@@ -53,7 +52,6 @@ def get_info_gain(guess: str, possible_answers: list[str]) -> float:
     information_gain = current_entropy - expected_entropy
 
     return information_gain
-
 
 
 if __name__ == '__main__':
