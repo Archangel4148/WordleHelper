@@ -115,6 +115,10 @@ class WordleSolver:
         self.valid_submissions: set | None = None
         self.valid_answers: set | None = None
 
+        # Pre-processed word storage
+        self.sorted_submissions: list | None = None
+        self.word_scores: dict[str, float] = {}
+
         # Guess tracking variable
         self.remaining_answers: list | None = None
 
@@ -133,12 +137,6 @@ class WordleSolver:
         self.remaining_answers = list(self.valid_answers)
 
     def load_files(self):
-        with open(ALL_WORDS_PATH, "r") as f:
-            self.valid_submissions = set(line.strip() for line in f.readlines())
-        with open(ALL_ANSWERS_PATH, "r") as f:
-            self.valid_answers = set(line.strip() for line in f.readlines())
-        with open(BACKUP_WORDS_PATH, "r") as f:
-            self.backup_guesses = set(line.strip() for line in f.readlines())
         with open(POSITION_FREQUENCIES_PATH, "r") as f:
             # Parse position frequencies from file
             lines = f.readlines()
@@ -148,6 +146,14 @@ class WordleSolver:
                 letter = sections[0]
                 values = [float(v) for v in sections[1].split(", ")]
                 self.position_frequencies[letter] = values
+        with open(ALL_WORDS_PATH, "r") as f:
+            self.valid_submissions = set(line.strip() for line in f.readlines())
+            self.word_scores = {word: self.get_word_heuristic_score(word) for word in self.valid_submissions}
+            self.sorted_submissions = sorted(self.valid_submissions, key=lambda w: self.word_scores[w], reverse=True)
+        with open(ALL_ANSWERS_PATH, "r") as f:
+            self.valid_answers = set(line.strip() for line in f.readlines())
+        with open(BACKUP_WORDS_PATH, "r") as f:
+            self.backup_guesses = set(line.strip() for line in f.readlines())
 
     def update_remaining_answers(self):
         self.remaining_answers = [word for word in self.remaining_answers if self.state.check_possible_answer(word)]
@@ -159,9 +165,10 @@ class WordleSolver:
 
     def get_best_answers(self, num_results: int, candidate_depth: int):
         # Find the "best" candidates using a simple heuristic
-        heuristic_candidates = sorted(self.valid_submissions, key=self.get_word_heuristic_score, reverse=True)[
+        heuristic_guess_candidates = self.sorted_submissions[:candidate_depth]
+        heuristic_answer_candidates = sorted(self.remaining_answers, key=lambda w: self.word_scores[w], reverse=True)[
             :candidate_depth]
-        candidates = set(heuristic_candidates) | set(self.remaining_answers)
+        candidates = set(heuristic_guess_candidates) | set(heuristic_answer_candidates)
 
         # Focus on the candidates and find the best information gain
         info_guesses, info_answers = [], []
